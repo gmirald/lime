@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import sys
 import argparse
 import os
 import re
@@ -83,7 +84,7 @@ def check_algorithm(url):
 
 def check_weak_ciphers(url):
 
-    weak_ciphers = [    'RC4', 'DES', 'RC2', 'IDEA', 'SEED', '3DES', 'ADH', 'LOW', 'EXP']
+    weak_ciphers = ['RC4', 'DES', 'RC2', 'IDEA', 'SEED', '3DES', 'ADH', 'LOW', 'EXP']
 
     print("------------------------------")
     print("SSL/TLS weak ciphers check:")
@@ -174,7 +175,7 @@ def check_headers(url):
         print("Content-Security-Policy header not found")
     pass 
 
-def check_compressions(url):
+def check_compression(url):
     print("--------------------------")
     print("Checking HTTP compression...")
     print("--------------------------")
@@ -205,43 +206,45 @@ def check_options(url):
     pass 
 
 def main():
-    parser = argparse.ArgumentParser(description='A tool for checking security configurations of a website')
-    parser.add_argument('url', help='the URL to check')
-    parser.add_argument('-c', '--cert', action='store_true', help='check the SSL/TLS certificate')
-    parser.add_argument('-a', '--algorithm', action='store_true', help='check the encryption algorithm used')
-    parser.add_argument('-w', '--weak-ciphers', action='store_true', help='check for weak ciphers')
-    parser.add_argument('-p', '--protocols', action='store_true', help='check for insecure protocols')
-    parser.add_argument('-s', '--headers', action='store_true', help='check security headers')
-    parser.add_argument('-o', '--options', action='store_true', help='check for insecure HTTP options')
-    parser.add_argument('-z', '--compression', action='store_true', help='check for compression vulnerabilities')
-    parser.add_argument('--all', action='store_true', help='check all security configurations')
-    
-    try:
-        args = parser.parse_args()
+    parser = argparse.ArgumentParser(description='Check website security.')
+    parser.add_argument('url', type=str, help='URL to check')
 
-        if args.all:
-            check_cert(args.url)
-            check_algorithm(args.url)
-            check_weak_ciphers(args.url)
-            check_protocols(args.url)
-            check_headers(args.url)
-            check_compression(args.url)
-            check_options(args.url)
-        else:
-            if args.cert:
-                check_cert(args.url)
-            if args.algorithm:
-                check_algorithm(args.url)
-            if args.weak_ciphers:
-                check_weak_ciphers(args.url)
-            if args.protocols:
-                check_protocols(args.url)
-            if args.headers:
-                check_headers(args.url)
-            if args.compression:
-                check_compression(args.url)
-            if args.options:
-                check_options(args.url)
-    except argparse.ArgumentError as e:
-        print('Error: {}'.format(e))
-        sys.exit(1)
+    # Optional arguments
+    parser.add_argument('--cert', action='store_true', help='Check SSL certificate')
+    parser.add_argument('--algorithm', action='store_true', help='Check SSL certificate signature algorithm')
+    parser.add_argument('--ciphers', action='store_true', help='Check weak SSL/TLS ciphers')
+    parser.add_argument('--protocols', action='store_true', help='Check SSL/TLS protocols')
+    parser.add_argument('--headers', action='store_true', help='Check HTTP headers')
+    parser.add_argument('--compression', action='store_true', help='Check compression settings')
+    parser.add_argument('--options', action='store_true', help='Check allowed HTTP methods')
+
+    args = parser.parse_args()
+
+    url = args.url
+
+    if args.cert:
+        check_cert(url)
+
+    if args.algorithm:
+        check_algorithm(url)
+
+    if args.ciphers:
+        check_weak_ciphers(url)
+
+    if args.protocols:
+        check_protocols(url)
+
+    if args.headers:
+        check_headers(url)
+
+    if args.compression:
+        check_compression(url)
+
+    if args.options:
+        check_options(url)
+
+if __name__ == '__main__':
+    try:
+        main()
+    except Exception as e:
+        print(f"Error: {e}")
