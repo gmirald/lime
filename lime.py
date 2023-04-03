@@ -40,7 +40,7 @@ def main():
     if args.all or args.options:
         check_options(url)
 
-def check_certificate(url):
+def check_cert(url):
     print("--------------------------")
     print("SSL/TLS Certificate check:")
     print("--------------------------")
@@ -85,6 +85,7 @@ def check_certificate(url):
         print(cert_end)
 
     return
+    pass
 
 def check_algorithm(url):
     print("--------------------------------")
@@ -108,6 +109,7 @@ def check_algorithm(url):
                 key_length = int(line.split(' ')[1])
                 if key_length < 2048:
                     print(f" Diffie-Hellman parameter is weak: {key_length} bits")
+    pass
 
 def check_weak_ciphers(url):
 
@@ -129,6 +131,7 @@ def check_weak_ciphers(url):
         conn.close()
     except (ssl.SSLError, socket.error) as error:
         print(f"Error: {error}")
+    pass 
 
 def check_protocol_versions(url):
     print("-------------------------------")
@@ -159,6 +162,7 @@ def check_protocol_versions(url):
             print(f"{name}: Error: {e}")
         else:
             print(f"{name}: Supported")
+    pass 
 
 def check_headers(url):
     print("-------------------------------")
@@ -198,6 +202,7 @@ def check_headers(url):
         print("Content-Security-Policy header found")
     else:
         print("Content-Security-Policy header not found")
+    pass 
 
 def check_compressions(url):
     print("--------------------------")
@@ -216,6 +221,7 @@ def check_compressions(url):
             print("Unknown compression algorithm: " + encoding)
     else:
         print("No compression is enabled.")
+    pass 
 
 def check_options(url):
     print("Checking HTTP OPTIONS...")
@@ -226,46 +232,46 @@ def check_options(url):
         print("HTTP OPTIONS is disabled.")
     else:
         print("Unable to determine if HTTP OPTIONS is enabled.")
-        
+    pass 
+
 def main():
-    parser = argparse.ArgumentParser(description='Lime - Security Checker')
-    parser.add_argument('url', metavar='url', type=str, help='URL to check')
-    parser.add_argument('-c', '--cert', action='store_true', help='Check SSL/TLS certificate')
-    parser.add_argument('-a', '--algorithm', action='store_true', help='Check SSL/TLS certificate signature algorithm')
-    parser.add_argument('-w', '--weak-ciphers', action='store_true', help='Check for weak SSL/TLS ciphers')
-    parser.add_argument('-p', '--protocols', action='store_true', help='Check for insecure SSL/TLS protocols')
-    parser.add_argument('-s', '--headers', action='store_true', help='Check security-related HTTP headers')
-    parser.add_argument('-o', '--options', action='store_true', help='Check server security options')
-    parser.add_argument('-z', '--compression', action='store_true', help='Check for insecure compression')
-    parser.add_argument('--all', action='store_true', help='Run all checks')
+    parser = argparse.ArgumentParser(description='A tool for checking security configurations of a website')
+    parser.add_argument('url', help='the URL to check')
+    parser.add_argument('-c', '--cert', action='store_true', help='check the SSL/TLS certificate')
+    parser.add_argument('-a', '--algorithm', action='store_true', help='check the encryption algorithm used')
+    parser.add_argument('-w', '--weak-ciphers', action='store_true', help='check for weak ciphers')
+    parser.add_argument('-p', '--protocols', action='store_true', help='check for insecure protocols')
+    parser.add_argument('-s', '--headers', action='store_true', help='check security headers')
+    parser.add_argument('-o', '--options', action='store_true', help='check for insecure HTTP options')
+    parser.add_argument('-z', '--compression', action='store_true', help='check for compression vulnerabilities')
+    parser.add_argument('--all', action='store_true', help='check all security configurations')
+    
+    try:
+        args = parser.parse_args()
 
-    # Help option
-    parser.add_argument('-H', '--help', action='help', default=argparse.SUPPRESS, help='Show this help message and exit')
-
-    args = parser.parse_args()
-
-    # Error handling
-    if not any([args.cert, args.algorithm, args.weak_ciphers, args.protocols, args.headers, args.options, args.compression, args.all]):
-        parser.error('Please specify at least one check to run.')
-    elif args.all and any([args.cert, args.algorithm, args.weak_ciphers, args.protocols, args.headers, args.options, args.compression]):
-        parser.error('Cannot use --all with individual checks.')
-
-    # Run checks
-    url = args.url
-    if args.all:
-        check_all(url)
-    else:
-        if args.cert:
-            check_cert(url)
-        if args.algorithm:
-            check_algorithm(url)
-        if args.weak_ciphers:
-            check_weak_ciphers(url)
-        if args.protocols:
-            check_protocols(url)
-        if args.headers:
-            check_headers(url)
-        if args.options:
-            check_options(url)
-        if args.compression:
-            check_compression(url)
+        if args.all:
+            check_cert(args.url)
+            check_algorithm(args.url)
+            check_weak_ciphers(args.url)
+            check_protocols(args.url)
+            check_headers(args.url)
+            check_compression(args.url)
+            check_options(args.url)
+        else:
+            if args.cert:
+                check_cert(args.url)
+            if args.algorithm:
+                check_algorithm(args.url)
+            if args.weak_ciphers:
+                check_weak_ciphers(args.url)
+            if args.protocols:
+                check_protocols(args.url)
+            if args.headers:
+                check_headers(args.url)
+            if args.compression:
+                check_compression(args.url)
+            if args.options:
+                check_options(args.url)
+    except argparse.ArgumentError as e:
+        print('Error: {}'.format(e))
+        sys.exit(1)
