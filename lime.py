@@ -16,44 +16,39 @@ def check_cert(url):
     print("SSL/TLS Certificate check:")
     print("--------------------------")
 
-    context = ssl.create_default_context()
-
     with socket.create_connection((url, 443)) as sock:
-        with context.wrap_socket(sock, server_hostname=url) as sslsock:
+        with ssl.create_default_context().wrap_socket(sock, server_hostname=url) as sslsock:
             cert = sslsock.getpeercert()
 
-    cert_info = ssl.DER_cert_to_PEM_cert(cert)
+    issuer = cert['issuer'][0][0].split('CN=')[1]
+    subject = cert['subject'][0][0].split('CN=')[1]
+    not_before = cert['notBefore']
+    not_after = cert['notAfter']
+    common_name = cert['subjectAltName'][0][1]
 
-    is_self_signed = re.search("Issuer: CN=.*", cert_info)
-    if is_self_signed:
-        issuer = re.search("Issuer: .*", cert_info).group(0)
-        subject = re.search("Subject: .*", cert_info).group(0)
-        hostname = re.search("DNS:.*", cert_info).group(0)[4:]
-        print("Issuer:", issuer)
-        print("Subject:", subject)
-        if issuer == subject and hostname == url and issuer.split("=")[1] == url.split(".")[0]:
-            print("\033[31m Certificate is self-signed:", is_self_signed.group(0), "\033[0m")
-        else:
-            print("Certificate is not self-signed")
+    print(f"Issuer: {issuer}")
+    print(f"Subject: {subject}")
+    print(f"Common name: {common_name}")
 
-    is_wildcard = re.search("DNS:\*\..*", cert_info)
-    if is_wildcard:
-        print("\033[31m Certificate uses a wildcard:", is_wildcard.group(0), "\033[0m")
+    if subject == issuer and common_name == url and issuer.split("=")[1] == url.split(".")[0]:
+        print("\033[31mCertificate is self-signed\033[0m")
+    else:
+        print("Certificate is not self-signed")
+
+    if '*' in common_name:
+        print("\033[31mCertificate uses a wildcard\033[0m")
     else:
         print("Certificate does not use a wildcard")
 
-    cert_start = re.search("Not Before.*", cert_info).group(0)
-    cert_end = re.search("Not After.*", cert_info).group(0)
-    print("Certificate Date")
-    print(cert_start)
-    print(cert_end)
+    print(f"Certificate Date: {not_before} - {not_after}")
 
-    cert_end_date = datetime.strptime(cert_end.split(" ")[-3], "%b %d %H:%M:%S %Y").timestamp()
+    cert_end_date = datetime.strptime(not_after, "%b %d %H:%M:%S %Y %Z").timestamp()
     current_date = datetime.now().timestamp()
+
     if cert_end_date < current_date:
-        print("\033[31m", cert_end, "(SSL Certificate has expired)", "\033[0m")
+        print("\033[31mSSL certificate has expired\033[0m")
     else:
-        print(cert_end)
+        print("SSL certificate is valid")
 
     return
     pass
@@ -119,7 +114,7 @@ def check_protocols(url):
         "TLSv1.3": ssl.PROTOCOL_TLSv1_3,
     }
 
-    # Test connection with each protocol version
+   
     for name, version in protocols.items():
         try:
             context = ssl.SSLContext(version)
@@ -140,7 +135,7 @@ def check_headers(url):
     print("Security headers check:")
     print("-------------------------------")
     
-    # Set headers to send with request
+    
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
     }
@@ -210,6 +205,7 @@ def main():
     parser.add_argument('url', type=str, help='URL to check')
 
     # Optional arguments
+    parser.add_argument('--all', action='store_true', help='Run all checks')
     parser.add_argument('--cert', action='store_true', help='Check SSL certificate')
     parser.add_argument('--algorithm', action='store_true', help='Check SSL certificate signature algorithm')
     parser.add_argument('--ciphers', action='store_true', help='Check weak SSL/TLS ciphers')
@@ -222,26 +218,35 @@ def main():
 
     url = args.url
 
-    if args.cert:
+    if args.all:
         check_cert(url)
-
-    if args.algorithm:
         check_algorithm(url)
-
-    if args.ciphers:
         check_weak_ciphers(url)
-
-    if args.protocols:
         check_protocols(url)
-
-    if args.headers:
         check_headers(url)
-
-    if args.compression:
         check_compression(url)
-
-    if args.options:
         check_options(url)
+    else:
+        if args.cert:
+            check_cert(url)
+
+        if args.algorithm:
+            check_algorithm(url)
+
+        if args.ciphers:
+            check_weak_ciphers(url)
+
+        if args.protocols:
+            check_protocols(url)
+
+        if args.headers:
+            check_headers(url)
+
+        if args.compression:
+            check_compression(url)
+
+        if args.options:
+            check_options(url)
 
 if __name__ == '__main__':
     try:
