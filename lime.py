@@ -10,6 +10,36 @@ import subprocess
 
 from datetime import datetime
 
+def main():
+    parser = argparse.ArgumentParser(description='A tool for checking the security of a website')
+    parser.add_argument('url', type=str, help='the URL of the website to check')
+    parser.add_argument('-c', '--cert', action='store_true', help='check the website\'s SSL/TLS certificate')
+    parser.add_argument('-a', '--algorithm', action='store_true', help='check the website\'s SSL/TLS algorithm')
+    parser.add_argument('-w', '--weak-ciphers', action='store_true', help='check the website for weak SSL/TLS ciphers')
+    parser.add_argument('-p', '--protocols', action='store_true', help='check the website\'s SSL/TLS protocols')
+    parser.add_argument('-s', '--headers', action='store_true', help='check the website\'s HTTP headers')
+    parser.add_argument('-o', '--compression', action='store_true', help='check the website for HTTP compression vulnerabilities')
+    parser.add_argument('-z', '--options', action='store_true', help='check the website for HTTP OPTIONS vulnerabilities')
+    parser.add_argument('--all', action='store_true', help='check all available security tests')
+    args = parser.parse_args()
+
+    url = args.url
+
+    if args.all or args.cert:
+        check_cert(url)
+    if args.all or args.algorithm:
+        check_algorithm(url)
+    if args.all or args.weak_ciphers:
+        check_weak_ciphers(url)
+    if args.all or args.protocols:
+        check_protocols(url)
+    if args.all or args.headers:
+        check_headers(url)
+    if args.all or args.compression:
+        check_compression(url)
+    if args.all or args.options:
+        check_options(url)
+
 def check_certificate(url):
     print("--------------------------")
     print("SSL/TLS Certificate check:")
