@@ -10,41 +10,6 @@ import subprocess
 
 from datetime import datetime
 
-def main():
-    args = sys.argv[1:]
-    if not args:
-        print("Usage: python lime.py [-c] [-a] [-w] [-p] [-s] [-o] [-z] [--all] <url>")
-        return
-
-    url = args[-1]
-
-    if "--all" in args:
-        check_cert(url)
-        check_algorithm(url)
-        check_weak_ciphers(url)
-        check_protocols(url)
-        check_headers(url)
-        check_compression(url)
-        check_options(url)
-    else:
-        if "-c" in args:
-            check_cert(url)
-        if "-a" in args:
-            check_algorithm(url)
-        if "-w" in args:
-            check_weak_ciphers(url)
-        if "-p" in args:
-            check_protocols(url)
-        if "-s" in args:
-            check_headers(url)
-        if "-o" in args:
-            check_options(url)
-        if "-z" in args:
-            check_compression(url)
-
-if __name__ == '__main__':
-    main()
-
 def check_certificate(url):
     print("--------------------------")
     print("SSL/TLS Certificate check:")
@@ -231,3 +196,46 @@ def check_options(url):
         print("HTTP OPTIONS is disabled.")
     else:
         print("Unable to determine if HTTP OPTIONS is enabled.")
+        
+def main():
+    parser = argparse.ArgumentParser(description='Lime - Security Checker')
+    parser.add_argument('url', metavar='url', type=str, help='URL to check')
+    parser.add_argument('-c', '--cert', action='store_true', help='Check SSL/TLS certificate')
+    parser.add_argument('-a', '--algorithm', action='store_true', help='Check SSL/TLS certificate signature algorithm')
+    parser.add_argument('-w', '--weak-ciphers', action='store_true', help='Check for weak SSL/TLS ciphers')
+    parser.add_argument('-p', '--protocols', action='store_true', help='Check for insecure SSL/TLS protocols')
+    parser.add_argument('-s', '--headers', action='store_true', help='Check security-related HTTP headers')
+    parser.add_argument('-o', '--options', action='store_true', help='Check server security options')
+    parser.add_argument('-z', '--compression', action='store_true', help='Check for insecure compression')
+    parser.add_argument('--all', action='store_true', help='Run all checks')
+
+    # Help option
+    parser.add_argument('-H', '--help', action='help', default=argparse.SUPPRESS, help='Show this help message and exit')
+
+    args = parser.parse_args()
+
+    # Error handling
+    if not any([args.cert, args.algorithm, args.weak_ciphers, args.protocols, args.headers, args.options, args.compression, args.all]):
+        parser.error('Please specify at least one check to run.')
+    elif args.all and any([args.cert, args.algorithm, args.weak_ciphers, args.protocols, args.headers, args.options, args.compression]):
+        parser.error('Cannot use --all with individual checks.')
+
+    # Run checks
+    url = args.url
+    if args.all:
+        check_all(url)
+    else:
+        if args.cert:
+            check_cert(url)
+        if args.algorithm:
+            check_algorithm(url)
+        if args.weak_ciphers:
+            check_weak_ciphers(url)
+        if args.protocols:
+            check_protocols(url)
+        if args.headers:
+            check_headers(url)
+        if args.options:
+            check_options(url)
+        if args.compression:
+            check_compression(url)
